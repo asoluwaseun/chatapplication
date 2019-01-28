@@ -131,11 +131,11 @@ chat.post('/registration.enter', (req, res)=>{
                 let lname = fields.lname;
                 let phone = fields.phone;
                 let tmp = files.pix.path;
-                let pix = files.pix.name;
+                let pix = files.pix.type;
                 let uname = fields.uname;
                 let pwd = fields.pwd;
                 let img = "userImages/"+pix;
-                let imgLink = "public/userImages/"+pix;
+                let imgLink = "public/userImages/"+phone+pix;
                 users.find({phone: phone}, (err, result)=>{
                     console.log(result)
                     if(result.length==0){
@@ -183,7 +183,9 @@ chat.post('/login', (req,res)=>{
         }else{
             users.find({}, (err, result)=>{
                 groups.find({}, (err, groups)=>{
-                    res.render('chatpage', {user: pn, users: result, groups: groups})
+                    let apiResult = {result,groups}
+                        res.send(apiResult);
+                    // res.render('chatpage', {user: pn, users: result, groups: groups})
                 })
             })
         }
@@ -238,9 +240,7 @@ chat.post('/grpCreate', (req, res)=>{
             nGrp.save().then(data=>{
                 users.find({}, (err, result)=>{
                     groups.find({}, (err, groups)=>{
-                        //s
-                        let apiResult = {result,groups}
-                        res.send(apiResult);
+                        res.render('chatpage', {user: grpCrtr, users: result, groups: groups})
                     })
                 })
             })
