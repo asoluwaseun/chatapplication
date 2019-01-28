@@ -239,7 +239,8 @@ chat.post('/grpCreate', (req, res)=>{
                 users.find({}, (err, result)=>{
                     groups.find({}, (err, groups)=>{
                         //s
-                        res.render('chatpage', {user: grpCrtr, users: result, groups: groups})
+                        let apiResult = {result,groups}
+                        res.send(apiResult);
                     })
                 })
             })
