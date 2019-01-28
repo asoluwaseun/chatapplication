@@ -319,6 +319,8 @@ chat.post('/api/registration', (req, res)=>{
                 res.status(200).send("data2" + result)
             }
         })
+        
+        chat.get('/api/registration/:name',(req,res)=>{res.status(200).send(req.params)})
         //Loading Chat Page
         chat.get('/chat', (req,res)=>{
             users.find({}, (err, result)=>{
