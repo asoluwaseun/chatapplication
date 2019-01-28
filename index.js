@@ -312,11 +312,11 @@ chat.post('/api/registration', (req, res)=>{
             
                     nUser = new users(newUser);
                     nUser.save().then(data=>{
-                        res.send(data)
+                        res.status(200).send(data)
                     })
                 })
             }else{
-                res.send("data2" + result)
+                res.status(200).send("data2" + result)
             }
         })
         //Loading Chat Page
