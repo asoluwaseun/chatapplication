@@ -184,8 +184,8 @@ chat.post('/login', (req,res)=>{
             users.find({}, (err, result)=>{
                 groups.find({}, (err, groups)=>{
                     let apiResult = {result,groups}
-                        res.send(apiResult);
-                    // res.render('chatpage', {user: pn, users: result, groups: groups})
+                        // res.send(apiResult);
+                    res.render('chatpage', {user: pn, users: result, groups: groups})
                 })
             })
         }
