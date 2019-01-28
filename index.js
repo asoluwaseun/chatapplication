@@ -238,6 +238,7 @@ chat.post('/grpCreate', (req, res)=>{
             nGrp.save().then(data=>{
                 users.find({}, (err, result)=>{
                     groups.find({}, (err, groups)=>{
+                        //s
                         res.render('chatpage', {user: grpCrtr, users: result, groups: groups})
                     })
                 })
