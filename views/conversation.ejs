@@ -26,7 +26,7 @@
     </div>
     <script>
         $(function(){
-            var socket = io.connect('http://sqichat.herokuapp.com');
+            var socket = io();
             var message = $("#message");
             var feedback = $('#feedback');
             var send_message = $('#send_message');
