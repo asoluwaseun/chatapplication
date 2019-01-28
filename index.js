@@ -280,6 +280,55 @@ chat.post('/deletegrp.sqi', (req,res)=>{
         })
     })
 })
+
+//apis
+chat.post('/api/registration', (req, res)=>{
+
+    form.parse(req, (err, fields, files)=>{
+        let fname = fields.fullName;
+        let phone = fields.phone;
+        // let tmp = files.pix.path;
+        // let pix = files.pix.type;
+        let uname = fields.dispName;
+        let pwd = fields.password;
+        // let img = "userImages/"+pix;
+        // let imgLink = "public/userImages/"+phone+pix;
+        users.find({phone: phone}, (err, result)=>{
+            console.log(result)
+            if(result.length==0){
+                fs.rename(tmp, imgLink, ()=>{
+                    let newUser = {
+                        fname: fname,
+                        // lname: lname,
+                        phone: phone,
+                        // picture: img,
+                        uname: uname,
+                        pwd: pwd
+                    }
+            
+                    nUser = new users(newUser);
+                    nUser.save().then(data=>{
+                        res.send(data)
+                    })
+                })
+            }else{
+                res.send("data2" + result)
+            }
+        })
+        //Loading Chat Page
+        chat.get('/chat', (req,res)=>{
+            users.find({}, (err, result)=>{
+                groups.find({}, (err, groups)=>{
+                    res.render('chatpage', {user: phone, users: result, groups: groups})
+                })
+            })
+        })
+    })
+
+    
+        
+            
+})
 //socket io instantiation
 let io = require('socket.io')(port);
 
