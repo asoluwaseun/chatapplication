@@ -202,7 +202,7 @@ chat.post('/login', (req,res)=>{
 })
 
 //Conversation
-chat.post('/conversation', (req, res)=>{
+chat.post('/conversation.sqi', (req, res)=>{
     let cUser = req.body.cUserId;
     let chatUser = req.body.chatUserId;
     let convId = cUser+chatUser;
