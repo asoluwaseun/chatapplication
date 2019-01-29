@@ -29,12 +29,15 @@ var form = new fm.IncomingForm();
 var bodyParser = require('body-parser');
 chat.use(bodyParser.json());
 chat.use(bodyParser.urlencoded({extended:true}));
+
 chat.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "http://localhost");
-    header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
   });
+  
+
 //mongoose requirement
 var mongoose = require('mongoose');
 
@@ -43,13 +46,15 @@ mongoose.Promise = global.Promise;
 
 //connection to database
 mongoose.connect("mongodb://admin:chatadmin1@ds113765.mlab.com:13765/chatapp");
+//mongoose.connect("mongodb://localhost:27017/newChatData",{ useNewUrlParser: true })
+
 
 //index - onload
 chat.get('/', (req, res)=>{
     res.render('index', {status: null});
 })
 //Load SignUp page
-chat.get('/signUp.sqi', (req, res)=>{
+chat.get('/signUp', (req, res)=>{
     res.render('signUp', {status: null})
 })
 
@@ -129,18 +134,17 @@ chat.post('/checkPhone', (req, res)=>{
 
 //Submitting registration details
 
-chat.post('/registration.enter', (req, res)=>{
+chat.post('/registration', (req, res)=>{
 
             form.parse(req, (err, fields, files)=>{
-                let fname = fields.fname;
-                let lname = fields.lname;
+                let fname = fields.fullName;
                 let phone = fields.phone;
-                let tmp = files.pix.path;
-                let pix = files.pix.type;
-                let uname = fields.uname;
-                let pwd = fields.pwd;
-                let img = "userImages/"+pix;
-                let imgLink = "public/userImages/"+phone+pix;
+                // let tmp = files.pix.path;
+                // let pix = files.pix.type;
+                let uname = fields.dispName;
+                let pwd = fields.password;
+                // let img = "userImages/"+pix;
+                // let imgLink = "public/userImages/"+phone+pix;
                 users.find({phone: phone}, (err, result)=>{
                     console.log(result)
                     if(result.length==0){
@@ -198,7 +202,7 @@ chat.post('/login', (req,res)=>{
 })
 
 //Conversation
-chat.post('/conversation.sqi', (req, res)=>{
+chat.post('/conversation', (req, res)=>{
     let cUser = req.body.cUserId;
     let chatUser = req.body.chatUserId;
     let convId = cUser+chatUser;
@@ -255,7 +259,7 @@ chat.post('/grpCreate', (req, res)=>{
 })
 //Group Chat
 
-chat.post('/groupchat.sqi', (req,res)=>{
+chat.post('/groupchat', (req,res)=>{
     let grpId = req.body.groupId;
     let user = req.body.user;
     groups.find({_id: grpId}, (err, groups)=>{
@@ -270,7 +274,7 @@ chat.post('/groupchat.sqi', (req,res)=>{
 
 //Group Delete
 
-chat.post('/deletegrp.sqi', (req,res)=>{
+chat.post('/deletegrp', (req,res)=>{
     let grpId = req.body.grpId;
     let user = req.body.user;
     groups.deleteOne({_id: grpId}, (err, result)=>{
@@ -287,6 +291,31 @@ chat.post('/deletegrp.sqi', (req,res)=>{
 })
 
 //apis
+
+chat.post('/api/checkPhone', (req, res)=>{
+    let phone = req.body.phone;
+    users.find({phone: phone}, (err, result)=>{
+        console.log(result.length)
+        if(result.length!==0){
+            res.render("signUp", {status: "available"})
+        }else{
+            res.render("signUp", {status: "not available", phone: phone})
+        }
+    })
+
+    //Route to registration page
+    chat.get('/register/:uphone', (req,res)=>{
+        let uphone = req.params.uphone;
+        console.log(uphone)
+        res.render('register', {state: "routed", phone: uphone})
+    })
+})
+
+
+
+
+//Submitting registration details
+
 chat.post('/api/registration', (req, res)=>{
 
     form.parse(req, (err, fields, files)=>{
@@ -313,15 +342,13 @@ chat.post('/api/registration', (req, res)=>{
             
                     nUser = new users(newUser);
                     nUser.save().then(data=>{
-                        res.status(200).send(data)
+                        res.send(data)
                     })
                 })
             }else{
-                res.status(200).send("data2" + result)
+                res.send("data2" + result)
             }
         })
-        
-        chat.get('/api/registration/:name',(req,res)=>{res.status(200).send(req.params)})
         //Loading Chat Page
         chat.get('/chat', (req,res)=>{
             users.find({}, (err, result)=>{
@@ -335,6 +362,116 @@ chat.post('/api/registration', (req, res)=>{
     
         
             
+})
+//Login in
+
+chat.post('/api/login', (req,res)=>{
+    let pn = req.body.phone;
+    let pwd = req.body.pwd;
+//Checking Login Credentials
+    users.find({phone: pn, pwd: pwd}, (err, result)=>{
+        // console.log(result)
+        if(result.length==0){
+            res.render('index', {status: "invalid"})
+        }else{
+            users.find({}, (err, result)=>{
+                groups.find({}, (err, groups)=>{
+                    let apiResult = {result,groups}
+                        // res.send(apiResult);
+                    res.render('chatpage', {user: pn, users: result, groups: groups})
+                })
+            })
+        }
+    })
+})
+
+//Conversation
+chat.post('/api/conversation', (req, res)=>{
+    let cUser = req.body.cUserId;
+    let chatUser = req.body.chatUserId;
+    let convId = cUser+chatUser;
+    
+        users.find({phone: chatUser}, (err, result)=>{
+            let chtUser = result;
+            messages.find({$or: [{sender: cUser, rcp: chatUser}, {sender: chatUser, rcp: cUser}]}, (err, result)=>{
+                console.log(result);
+                res.render('conversationpage', {chatUser: chtUser, user: cUser, msgList: result, convId: convId})
+            })
+        })
+
+        
+
+})
+//Group Create
+
+chat.post('/api/grpCreate', (req, res)=>{
+    form.parse(req, (err, fields, files)=>{
+        let grpName = fields.grpName;
+        let grpCrtr = fields.creator;
+        
+        let date = new Date();
+        let dy = date.getDay();
+        let dt = date.getDate();
+        let hr = date.getHours();
+        let mn = date.getMinutes();
+        let time = date.toLocaleString();
+
+        let tmp = files.grpPix.path;
+        let pix = files.grpPix.name;
+        let img = "userImages/"+pix;
+        let imgLink = "public/userImages/"+pix;
+
+        fs.rename(tmp, imgLink, ()=>{
+            let grp = {
+                creator: grpCrtr,
+                name: grpName,
+                timeCreated: time,
+                picture: img
+            }
+    
+            nGrp = new groups(grp);
+            nGrp.save().then(data=>{
+                users.find({}, (err, result)=>{
+                    groups.find({}, (err, groups)=>{
+                        res.render('chatpage', {user: grpCrtr, users: result, groups: groups})
+                    })
+                })
+            })
+        })
+        
+    })
+})
+//Group Chat
+
+chat.post('/api/groupchat', (req,res)=>{
+    let grpId = req.body.groupId;
+    let user = req.body.user;
+    groups.find({_id: grpId}, (err, groups)=>{
+        users.find({phone: groups[0].creator}, (err, crtr)=>{
+            console.log(crtr)
+            grpMessages.find({grpId: grpId}, (err, messages)=>{
+                res.render('groupchat', {msg: messages, grpdt: groups, user: user, creator: crtr})
+            })
+        })
+    })
+})
+
+//Group Delete
+
+chat.post('/api/deletegrp', (req,res)=>{
+    let grpId = req.body.grpId;
+    let user = req.body.user;
+    groups.deleteOne({_id: grpId}, (err, result)=>{
+        console.log(err)
+        console.log(result)
+        grpMessages.deleteMany({grpId: grpId}, (err, result)=>{
+            users.find({}, (err, result)=>{
+                    groups.find({}, (err, groups)=>{
+                        res.render('chatpage', {user: user, users: result, groups: groups})
+                    })
+            })
+        })
+    })
 })
 //socket io instantiation
 let io = require('socket.io')(port);
